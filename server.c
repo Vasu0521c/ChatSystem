@@ -18,18 +18,25 @@ int main() {
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     int length = sizeof(addr);
 
-    if(bind(the_sock, (struct sockaddr *) &addr, length) < 0)
+    int binding_status = bind(the_sock, (struct sockaddr *) &addr, length);
+    if(binding_status == 0) {
+        printf("socket binding successfull\n");
+    }
+    else {
         printf("socket bindin failed\n");
+        exit(1);
+    }
 
-    listen(the_sock, 1);
+    listen(the_sock, 10);
     int x = sizeof(client);
     printf("server is listerning .....\n");
     int cli_soc = accept(the_sock, (struct sockaddr *) &client, &x);
+    printf("Client is connected\n");
     while(1) {
-    char message[100] = {};
-    read(cli_soc, message, x);
-    printf("The client says : %s",message);
-    write(cli_soc, "message received", strlen("message received"));
+        char message[100] = {};
+        read(cli_soc, message, 99);
+        printf("The client says : %s",message);
+        write(cli_soc, "message received", strlen("message received"));
     }
 
     return 0;

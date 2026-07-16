@@ -8,8 +8,7 @@
 
 #define MAX_MSG_SIZE 1025
 
-int main()
-{
+int main() {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     struct sockaddr_in server;
@@ -27,18 +26,24 @@ int main()
         printf("listening failed\n");
         exit(1);
     }
-    /* printf("listening on : %s  %d", server.sin_addr.s_addr, server.sin_port); */
     printf("listening on\n");
 
     int epfd = epoll_create1(0);
+    if(epfd == -1) {
+        printf("epoll instance creation failed\n");
+        exit(1);
+    }
 
     struct epoll_event ev, events[10];
 
     ev.events = EPOLLIN;
     ev.data.fd = server_fd;
 
-    epoll_ctl(epfd, EPOLL_CTL_ADD, server_fd, &ev);
-
+    int epoll_ctl_status = epoll_ctl(epfd, EPOLL_CTL_ADD, server_fd, &ev);
+    if(epoll_ctl_status != 0) {
+        printf("epoll ctl failed\n");
+        exit(1);
+    }
     char buffer[MAX_MSG_SIZE];
 
     while (1)
@@ -48,7 +53,7 @@ int main()
             printf("epoll waiting sequence failed\n");
             exit(1);
         }
-        memset(buffer, '\0', 1023);
+        memset(buffer, '\0', 1024);
 
         for(int i = 0; i < n; i++) {
             int fd = events[i].data.fd;
@@ -79,7 +84,8 @@ int main()
                     printf("Client %d disconnected\n", fd);
                 }
                 else {
-                    write(fd, "messafge received", strlen("messafge received"));
+                    snprintf(buffer, sizeof(buffer), "message received from client %d", fd);
+                    write(fd, buffer, strlen(buffer));
                 }
             }
         }

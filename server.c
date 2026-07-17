@@ -6,6 +6,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include "vector.h"
+
 #define MAX_MSG_SIZE 1025
 
 int main() {
@@ -33,6 +35,7 @@ int main() {
         printf("epoll instance creation failed\n");
         exit(1);
     }
+    vectar *clients = create_vectar();
 
     struct epoll_event ev, events[10];
 
@@ -45,6 +48,7 @@ int main() {
         exit(1);
     }
     char buffer[MAX_MSG_SIZE];
+    int j = 0;
 
     while (1)
     {
@@ -64,6 +68,7 @@ int main() {
                     printf("connection acceptance failed\n");
                     continue;
                 }
+                push(clients, client);
                 printf("connection acceptanced\n");
                 ev.events = EPOLLIN;
                 ev.data.fd = client;
@@ -73,22 +78,31 @@ int main() {
                     continue;
                 }
                 printf("epol control add sequence successfull\n");
-                printf("Client %d connected\n", client);
+                /* printf("Client %d connected\n", client); */
             }
             else {
                 int bytes = read(fd, buffer, sizeof(buffer));
-                printf("%s\n", buffer);
+                char hell[1000];
+                strcpy(hell, buffer);
                 if(bytes <= 0) {
                     epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
                     close(fd);
                     printf("Client %d disconnected\n", fd);
                 }
                 else {
-                    snprintf(buffer, sizeof(buffer), "message received from client %d", fd);
-                    write(fd, buffer, strlen(buffer));
+                    snprintf(buffer, sizeof(buffer), "client %d says %s", fd, hell);
+                    int *value = clients -> data;
+                    for(int length = clients -> length; length--; value++) {
+                        printf("hello %d ", length);
+                        if(*value == fd)
+                            continue;
+                        write(*value, buffer, strlen(buffer));
+                    }
+                    break;
                 }
             }
         }
+
     }
     return 0;
 }

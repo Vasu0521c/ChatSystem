@@ -10,32 +10,58 @@
 
 #define MAX_MSG_SIZE 1025
 
-int main() {
+int server_start(char *ip, int port) {
+
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     struct sockaddr_in server;
     server.sin_family = AF_INET;
-    server.sin_port = htons(17112);
-    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_port = htons(port);
+    server.sin_addr.s_addr = inet_addr(ip);
 
     int binding_status = bind(server_fd, (struct sockaddr *)&server, sizeof(server));
     if(binding_status == -1) {
         printf("binding failed, errno : %d\n", errno);
-        exit(1);
+        return -1;
     }
     int listen_status = listen(server_fd, 10);
     if(listen_status != 0) {
         printf("listening failed\n");
-        exit(1);
+        return -1;
     }
     printf("listening on\n");
+
+    return server_fd;
+}
+
+int server_stop(int server_fd) {
+
+    close(server_fd);
+    printf("server %d is shutdown\n", server_fd);
+    return 0;
+}
+
+void broadcast(vectar *clients, int receipent_fd, char *msg, int size) {
+
+    int *fd    = clients -> data;
+    for(int length = clients -> length; length--; fd++) {
+        if(*fd == receipent_fd)
+            continue;
+        write(*fd, msg, size);
+    }
+}
+
+int main() {
+
+    int server_fd = server_start("127.0.0.1", 17112);
+
+    vectar *clients = create_vectar();
 
     int epfd = epoll_create1(0);
     if(epfd == -1) {
         printf("epoll instance creation failed\n");
         exit(1);
     }
-    vectar *clients = create_vectar();
 
     struct epoll_event ev, events[10];
 
@@ -48,13 +74,13 @@ int main() {
         exit(1);
     }
     char buffer[MAX_MSG_SIZE];
-    int j = 0;
 
     while (1)
     {
         int n = epoll_wait(epfd, events, 10, -1);
         if(n == -1) {
             printf("epoll waiting sequence failed\n");
+            server_stop(server_fd);
             exit(1);
         }
         memset(buffer, '\0', 1024);
@@ -68,7 +94,7 @@ int main() {
                     printf("connection acceptance failed\n");
                     continue;
                 }
-                push(clients, client);
+                clients = push(clients, client);
                 printf("connection acceptanced\n");
                 ev.events = EPOLLIN;
                 ev.data.fd = client;
@@ -78,7 +104,7 @@ int main() {
                     continue;
                 }
                 printf("epol control add sequence successfull\n");
-                /* printf("Client %d connected\n", client); */
+                printf("Client %d connected\n", client);
             }
             else {
                 int bytes = read(fd, buffer, sizeof(buffer));
@@ -91,18 +117,11 @@ int main() {
                 }
                 else {
                     snprintf(buffer, sizeof(buffer), "client %d says %s", fd, hell);
-                    int *value = clients -> data;
-                    for(int length = clients -> length; length--; value++) {
-                        printf("hello %d ", length);
-                        if(*value == fd)
-                            continue;
-                        write(*value, buffer, strlen(buffer));
-                    }
+                    broadcast(clients, fd, buffer, strlen(buffer));
                     break;
                 }
             }
         }
-
     }
     return 0;
 }

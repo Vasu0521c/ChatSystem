@@ -50,14 +50,14 @@ void pop(vectar *vec) {
     return;
 }
 
-void push(vectar *vec, int data) {
+vectar* push(vectar *vec, int data) {
 
 	if(vec -> size == 0) {
 		vec -> data   = malloc(sizeof(int));
 		vec -> data[vec -> length] = data;
 		vec -> size   = 1;
 		vec -> length = 1;
-		return;
+		return vec;
 	}
 	if(vec -> length >= vec -> size) {
 		vectar *temp   = create_vectar_with_size(vec -> size);
@@ -67,6 +67,6 @@ void push(vectar *vec, int data) {
 		vec = temp;
 	}
     vec -> data[vec -> length] = data;
-	vec -> length++;
-	return;
+	vec -> length = vec -> length + 1;
+	return vec;
 }

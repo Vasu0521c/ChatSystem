@@ -11,6 +11,6 @@ typedef struct {
 vectar* create_vectar();
 vectar* create_vectar_with_size(int size);
 void pop(vectar *vec);
-void push(vectar *vec, int data);
+vectar* push(vectar *vec, int data);
 
 #endif

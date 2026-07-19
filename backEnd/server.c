@@ -7,6 +7,7 @@
 #include <errno.h>
 
 #include "vector.h"
+#include "server.h"
 
 #define MAX_MSG_SIZE 1025
 
@@ -51,7 +52,7 @@ void broadcast(vectar *clients, int receipent_fd, char *msg, int size) {
     }
 }
 
-int main() {
+int server_work() {
 
     int server_fd = server_start("127.0.0.1", 17112);
 

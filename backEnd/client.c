@@ -58,7 +58,7 @@ void recv_msg(int client_socket, char *msg, int size) {
 
 int main() {
     
-    int client_socket = client_socket;
+    int client_socket = server_connect("127.0.0.1", 17112);
     char message[1024];
     while(1) {
         printf("Functions : \n"

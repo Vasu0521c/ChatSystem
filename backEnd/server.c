@@ -5,42 +5,12 @@
 #include <sys/epoll.h>
 #include <string.h>
 #include <errno.h>
+#include <pthread.h>
 
 #include "vector.h"
 #include "server.h"
 
 #define MAX_MSG_SIZE 1025
-
-int server_start(char *ip, int port) {
-
-    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-
-    struct sockaddr_in server;
-    server.sin_family = AF_INET;
-    server.sin_port = htons(port);
-    server.sin_addr.s_addr = inet_addr(ip);
-
-    int binding_status = bind(server_fd, (struct sockaddr *)&server, sizeof(server));
-    if(binding_status == -1) {
-        printf("binding failed, errno : %d\n", errno);
-        return -1;
-    }
-    int listen_status = listen(server_fd, 10);
-    if(listen_status != 0) {
-        printf("listening failed\n");
-        return -1;
-    }
-    printf("listening on\n");
-
-    return server_fd;
-}
-
-int server_stop(int server_fd) {
-
-    close(server_fd);
-    printf("server %d is shutdown\n", server_fd);
-    return 0;
-}
 
 void broadcast(vectar *clients, int receipent_fd, char *msg, int size) {
 
@@ -52,9 +22,9 @@ void broadcast(vectar *clients, int receipent_fd, char *msg, int size) {
     }
 }
 
-int server_work() {
+void *server_work(int *fd) {
 
-    int server_fd = server_start("127.0.0.1", 17112);
+    int server_fd = *fd;
 
     vectar *clients = create_vectar();
 
@@ -126,3 +96,37 @@ int server_work() {
     }
     return 0;
 }
+int server_start(char *ip, int port) {
+
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    struct sockaddr_in server;
+    server.sin_family = AF_INET;
+    server.sin_port = htons(port);
+    server.sin_addr.s_addr = inet_addr(ip);
+
+    int binding_status = bind(server_fd, (struct sockaddr *)&server, sizeof(server));
+    if(binding_status == -1) {
+        printf("binding failed, errno : %d\n", errno);
+        return -1;
+    }
+    int listen_status = listen(server_fd, 10);
+    if(listen_status != 0) {
+        printf("listening failed\n");
+        return -1;
+    }
+    printf("listening on\n");
+    pthread_t server_work_thread;
+    pthread_create(&server_work_thread, NULL, (void *)server_work, &server_fd);
+
+    return server_fd;
+}
+
+int server_stop(int server_fd) {
+
+    close(server_fd);
+    printf("server %d is shutdown\n", server_fd);
+    return 0;
+}
+
+

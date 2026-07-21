@@ -43,7 +43,7 @@ void pop(vectar *vec) {
 	}
 	vec -> length--;
 	int *hell     = malloc(sizeof(int) * vec -> size + 1);
-	memset(hell, 0, sizeof((vec -> size + 1) * (sizeof(int))));
+	memset(hell, 0, (vec -> size + 1) * (sizeof(int)));
 	memcpy(hell, vec -> data + 1, sizeof(int) * (vec -> length));
 	free(vec -> data);
 	vec -> data = hell;

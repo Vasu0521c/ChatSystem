@@ -9,6 +9,8 @@
 /* #include <pthread.h> */
 #include <sys/epoll.h>
 
+#include "client.h"
+
 /* void* write_function(int* fd) { */
 /*     char message[1024]; */
 /*     while(1) { */
@@ -41,73 +43,77 @@ int server_connect(char *ip, int port) {
     return client_socket;
 }
     
-void send_msg(int server_fd, char *msg, int size) {
+void send_msg(int server_fd) {
 
     int c;
     while((c = getchar() != '\n' && c != EOF));
+    char msg[1024];
+    int size = 1023;
     memset(msg, 0, size);
     fgets(msg, size, stdin);
     int len = strlen(msg);
     write(server_fd, msg, len - 1);
 }
 
-void recv_msg(int client_socket, char *msg, int size) {
+void recv_msg(int client_socket) {
 
+    char msg[1024];
+    int size = 1023;
     memset(msg, 0, size);
     read(client_socket, msg, size);
     printf("%s\n", msg);
 }
 
-int main() {
+/* int main() { */
     
-    int client_socket = server_connect("127.0.0.1", 17112);
-    if (client_socket == -1) {
-        printf("server connection failed\n"
-               "check server configuration or server is running\n");
-        exit(1);
-    }
-    char message[1024];
-    while(1) {
-        printf("Functions : \n"
-            "1. Send Message\n"
-            "2. Receive Message\n"
-            "3. Exit : \n");
+/*     int client_socket = server_connect("127.0.0.1", 17112); */
+/*     if (client_socket == -1) { */
+/*         printf("server connection failed\n" */
+/*                "check server configuration or server is running\n"); */
+/*         exit(1); */
+/*     } */
+/*     char message[1024]; */
+/*     while(1) { */
+/*         printf("Functions : \n" */
+/*             "1. Send Message\n" */
+/*             "2. Receive Message\n" */
+/*             "3. Exit : \n"); */
 
-        int choice = 0;
-        int c;
-        while((c = getchar() != '\n' && c != EOF));
-        scanf("%d", &choice);
-        switch(choice) {
-            case 1:
-                send_msg(client_socket, message, 1023);
-                break;
-            case 2:
-                recv_msg(client_socket, message, 1023);
-                break;
-            case 3:
-                exit(1);
-                break;
-            default:
-                printf("Enter valid opertions");
-                break;
-        }
-    }
-    /* pthread_t write_thread; */
-    /* pthread_create(&write_thread, NULL, (void *)write_function, &client_socket); */
+/*         int choice = 0; */
+/*         int c; */
+/*         while((c = getchar() != '\n' && c != EOF)); */
+/*         scanf("%d", &choice); */
+/*         switch(choice) { */
+/*             case 1: */
+/*                 send_msg(client_socket, message, 1023); */
+/*                 break; */
+/*             case 2: */
+/*                 recv_msg(client_socket, message, 1023); */
+/*                 break; */
+/*             case 3: */
+/*                 exit(1); */
+/*                 break; */
+/*             default: */
+/*                 printf("Enter valid opertions"); */
+/*                 break; */
+/*         } */
+/*     } */
+/*     /\* pthread_t write_thread; *\/ */
+/*     /\* pthread_create(&write_thread, NULL, (void *)write_function, &client_socket); *\/ */
 
-    /* int epfd = epoll_create1(0); */
+/*     /\* int epfd = epoll_create1(0); *\/ */
 
-    /* struct epoll_event ev, events[10]; */
-    /* ev.events = EPOLLIN; */
-    /* ev.data.fd = client_socket; */
+/*     /\* struct epoll_event ev, events[10]; *\/ */
+/*     /\* ev.events = EPOLLIN; *\/ */
+/*     /\* ev.data.fd = client_socket; *\/ */
     
-    /* epoll_ctl(epfd, EPOLL_CTL_ADD, client_socket, &ev); */
+/*     /\* epoll_ctl(epfd, EPOLL_CTL_ADD, client_socket, &ev); *\/ */
 
-    /* while(1) { */
-    /*     epoll_wait(epfd, events, 10, -1); */
-    /*     memset(message, '\0', 1023); */
-    /*     read(client_socket, message, 1023); */
-    /*     printf("%s\n", message); */
-    /* } */
-    return 0;
-}
+/*     /\* while(1) { *\/ */
+/*     /\*     epoll_wait(epfd, events, 10, -1); *\/ */
+/*     /\*     memset(message, '\0', 1023); *\/ */
+/*     /\*     read(client_socket, message, 1023); *\/ */
+/*     /\*     printf("%s\n", message); *\/ */
+/*     /\* } *\/ */
+/*     return 0; */
+/* } */

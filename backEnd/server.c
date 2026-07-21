@@ -22,9 +22,9 @@ void broadcast(vectar *clients, int receipent_fd, char *msg, int size) {
     }
 }
 
-void *server_work(int *fd) {
+void* server_work(void *fd) {
 
-    int server_fd = *fd;
+    int server_fd = *(int *)fd;
 
     vectar *clients = create_vectar();
 
@@ -52,6 +52,7 @@ void *server_work(int *fd) {
         if(n == -1) {
             printf("epoll waiting sequence failed\n");
             server_stop(server_fd);
+            free(fd);
             exit(1);
         }
         memset(buffer, '\0', 1024);
@@ -94,8 +95,10 @@ void *server_work(int *fd) {
             }
         }
     }
+    free(fd);
     return 0;
 }
+
 int server_start(char *ip, int port) {
 
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -117,7 +120,9 @@ int server_start(char *ip, int port) {
     }
     printf("listening on\n");
     pthread_t server_work_thread;
-    pthread_create(&server_work_thread, NULL, (void *)server_work, &server_fd);
+    int *temp = malloc(sizeof(int));
+    *temp = server_fd;
+    pthread_create(&server_work_thread, NULL, (void *)server_work, temp);
 
     return server_fd;
 }
@@ -128,5 +133,3 @@ int server_stop(int server_fd) {
     printf("server %d is shutdown\n", server_fd);
     return 0;
 }
-
-

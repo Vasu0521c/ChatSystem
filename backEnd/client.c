@@ -43,6 +43,8 @@ int server_connect(char *ip, int port) {
     
 void send_msg(int server_fd, char *msg, int size) {
 
+    int c;
+    while((c = getchar() != '\n' && c != EOF));
     memset(msg, 0, size);
     fgets(msg, size, stdin);
     int len = strlen(msg);
@@ -59,6 +61,11 @@ void recv_msg(int client_socket, char *msg, int size) {
 int main() {
     
     int client_socket = server_connect("127.0.0.1", 17112);
+    if (client_socket == -1) {
+        printf("server connection failed\n"
+               "check server configuration or server is running\n");
+        exit(1);
+    }
     char message[1024];
     while(1) {
         printf("Functions : \n"
@@ -67,6 +74,8 @@ int main() {
             "3. Exit : \n");
 
         int choice = 0;
+        int c;
+        while((c = getchar() != '\n' && c != EOF));
         scanf("%d", &choice);
         switch(choice) {
             case 1:
@@ -77,6 +86,9 @@ int main() {
                 break;
             case 3:
                 exit(1);
+                break;
+            default:
+                printf("Enter valid opertions");
                 break;
         }
     }

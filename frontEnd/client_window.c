@@ -1,14 +1,20 @@
+
 #include "gio/gio.h"
 #include <gtk/gtk.h>
 
 #include "../backEnd/client.h"
 
+#include <stdio.h>
+
 struct data {
     int server_fd;
+    int length;
+    char *message;
     GtkWidget *label;
+    GtkWidget *grid_;
 };
 
-int connect_to_server(GtkButton button, gpointer *parameters) {
+int connect_to_server(GtkButton *button, gpointer parameters) {
     
     char ip[] = "127.0.0.1";
     int port = 17112;
@@ -24,7 +30,14 @@ int connect_to_server(GtkButton button, gpointer *parameters) {
     return 0;
 }
 
-int send_msg_to_server(GtkButton button, gpointer *parameters) {
+void send_msg_actual(GtkButton *button, gpointer pointer) {
+
+    struct data *temp = (struct data *) pointer;
+    send_msg(temp -> server_fd, temp -> message, temp -> length);
+    return;
+}
+
+int send_msg_to_server(GtkButton *button, gpointer parameters) {
 
     struct data *temp = (struct data *)parameters;
     int server_id = temp -> server_fd;
@@ -32,12 +45,20 @@ int send_msg_to_server(GtkButton button, gpointer *parameters) {
         printf("Check connection to server and try again\n");
         return -1;
     }
-    send_msg(server_id);
+
+
+    temp -> message = msg;
+    printf("%s\n",msg);
+    
+    gtk_grid_attach(GTK_GRID(temp -> grid_), text_entry, 2, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(temp -> grid_), send, 3, 2, 1, 1);
+    
+    g_signal_connect(GTK_BUTTON(send), "clicked", G_CALLBACK(send_msg_actual), temp);
     gtk_label_set_text(GTK_LABEL(temp -> label), "Messege Sending...");
     return 0;
 }
 
-int recv_msg_from_server(GtkButton button, gpointer *parameters) {
+int recv_msg_from_server(GtkButton *button, gpointer parameters) {
 
     struct data *temp = (struct data *)parameters;
     int server_id = temp -> server_fd;
@@ -52,16 +73,35 @@ int recv_msg_from_server(GtkButton button, gpointer *parameters) {
 
 int client_window(GtkApplication *app) {
 
-    GtkWidget *window;
+    GtkWidget *main_window;
+    GtkWidget *control_window;
+    GtkWidget *interactable_window;
+    GtkWidget *window_grid;
+    
     GtkWidget *grid;
     GtkWidget *client;
-    GtkWidget *connect_to_server;
+    GtkWidget *connect_server;
     GtkWidget *send_msg;
     GtkWidget *recv_msg;
 
-    window = gtk_application_window_new(app);
-    gtk_window_set_title(GTK_WINDOW(window), "client");
-    gtk_window_set_default_size(GTK_WINDOW(window), 800, 800);
+    //widgets for message funtion
+    GtkWidget *text;
+    GtkWidget *text_entry;
+    GtkWidget *buffer;
+    GtkWidget *send;
+
+    main_window = gtk_application_window_new(app);
+    gtk_window_set_title(GTK_WINDOW(main_window), "client");
+    gtk_window_set_default_size(GTK_WINDOW(main_window), 800, 800);
+
+    window_grid = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(window_grid), 10);
+    gtk_grid_set_row_spacing(GTK_GRID(window_grid), 10);
+    gtk_widget_set_halign(window_grid, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(window_grid, GTK_ALIGN_CENTER);
+
+    gtk_grid_attach(GTK_GRID(window_grid), control_window, 0, 0, 300, 800); 
+    gtk_grid_attach(GTK_GRID(window_grid), interactable_window, 1, 0, 500, 800);
 
     client = gtk_label_new("Client Status");
 
@@ -72,25 +112,25 @@ int client_window(GtkApplication *app) {
     gtk_widget_set_halign(grid, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(grid, GTK_ALIGN_CENTER);
 
-    connect_to_server = gtk_button_new_with_label("Connect to Server");
+    connect_server = gtk_button_new_with_label("Connect to Server");
     send_msg = gtk_button_new_with_label("Send Message");
     recv_msg = gtk_button_new_with_label("Receive Message");
 
-
     struct data *parameters = malloc(sizeof(struct data));
     parameters -> label = client;
+    parameters -> grid_ = grid;
     
-    g_signal_connect(connect_to_server, "clicked", G_CALLBACK(connect_to_server), parameters);
+    g_signal_connect(connect_server, "clicked", G_CALLBACK(connect_to_server), (void *)parameters);
     g_signal_connect(send_msg, "clicked", G_CALLBACK(send_msg_to_server), parameters);
     g_signal_connect(recv_msg, "clicked", G_CALLBACK(recv_msg_from_server), parameters);
 
     gtk_grid_attach(GTK_GRID(grid), client, 0, 0, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), connect_to_server, 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), connect_server, 0, 1, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), send_msg, 0, 2, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), recv_msg, 0, 3, 1, 1);
 
-    gtk_window_set_child(GTK_WINDOW(window), grid);
-    gtk_window_present(GTK_WINDOW(window));
+    gtk_window_set_child(GTK_WINDOW(main_window), grid);
+    gtk_window_present(GTK_WINDOW(main_window));
     
     return 0;
 }

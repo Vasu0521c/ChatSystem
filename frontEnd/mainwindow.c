@@ -49,7 +49,13 @@ int window(GtkApplication *app) {
     GtkWidget *button_stop;
     GtkWidget *button_reset;
 
-   char info_str[1000] = "Server Status : ";
+    GtkEntryBuffer *text;
+    GtkWidget *entry;
+
+    entry = gtk_entry_new();
+    text = gtk_entry_buffer_new("", 0);
+    char *msg = (char *)gtk_entry_buffer_get_text(text);
+    gtk_widget_set_visible(GTK_WIDGET(entry), 1);
 
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Server" );
@@ -61,6 +67,7 @@ int window(GtkApplication *app) {
     button_stop  = gtk_button_new_with_label("Stop Server");
     button_reset = gtk_button_new_with_label("Reset server");
 
+    printf("%s\n", msg);
     g_signal_connect(button_start, "clicked", G_CALLBACK(button_server_start), information);
     g_signal_connect(button_stop, "clicked", G_CALLBACK(button_server_stop), information);
     g_signal_connect(button_reset, "clicked", G_CALLBACK(button_server_reset), information);
@@ -75,6 +82,8 @@ int window(GtkApplication *app) {
     gtk_grid_attach(GTK_GRID(grid), button_start, 0, 1, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), button_stop, 0, 2, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), button_reset, 0, 3, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), entry, 0, 4, 1, 1);
+
 
     gtk_window_set_child(GTK_WINDOW(window), grid);
 

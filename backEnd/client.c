@@ -43,16 +43,11 @@ int server_connect(char *ip, int port) {
     return client_socket;
 }
     
-void send_msg(int server_fd) {
+void send_msg(int server_fd, char *msg, int length) {
 
     int c;
     while((c = getchar() != '\n' && c != EOF));
-    char msg[1024];
-    int size = 1023;
-    memset(msg, 0, size);
-    fgets(msg, size, stdin);
-    int len = strlen(msg);
-    write(server_fd, msg, len - 1);
+    write(server_fd, msg, length - 1);
 }
 
 void recv_msg(int client_socket) {

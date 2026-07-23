@@ -1,88 +1,111 @@
 #include <gtk/gtk.h>
 #include "../backEnd/server.h"
 
-void button_server_start(GtkWidget *button, gpointer information) {
+struct data {
+    GtkWidget *server_status_label,
+              *ip_address,
+              *port_number;
+};
 
-   int status = server_start("127.0.0.1", 17112);
+void button_server_start(GtkWidget *button, gpointer parameters) {
+
+   struct data *temp = (struct data *)parameters;
+   const char *ip = gtk_editable_get_text(GTK_EDITABLE(temp -> ip_address));
+   const char *port_temp = gtk_editable_get_text(GTK_EDITABLE(temp -> port_number));
+   int port_number = atoi(port_temp);
+   
+   int status = server_start((char *)ip, port_number);
    if (status == -1) {
        g_print("server connection failed\n");
-       gtk_label_set_text(GTK_LABEL(information), "Server status : Failed");
+       gtk_label_set_text(GTK_LABEL(temp -> server_status_label), "Server status : Failed");
    }
    else {
        g_print("server connected %d\n", status);
-       gtk_label_set_text(GTK_LABEL(information), "Server status : Connected");
+       gtk_label_set_text(GTK_LABEL(temp -> server_status_label), "Server status : Connected");
    }
 }
 
-void button_server_stop(GtkWidget *button, gpointer information) {
+void button_server_stop(GtkWidget *button, gpointer parameters) {
 
+   struct data *temp = (struct data *)parameters;
    int status = server_stop(status);
    if (status != 0) {
        g_print("server still running\n");
-       gtk_label_set_text(GTK_LABEL(information), "Server status : Server Still Running");
+       gtk_label_set_text(GTK_LABEL(temp -> server_status_label), "Server status : Server Still Running");
    }
    else {
        g_print("server stopped\n");
-       gtk_label_set_text(GTK_LABEL(information), "Server status : Stopped");
+       gtk_label_set_text(GTK_LABEL(temp -> server_status_label), "Server status : Stopped");
    }
 }
 
-void button_server_reset(GtkWidget *button, gpointer information) {
-   gtk_label_set_text(GTK_LABEL(information), "Server Status"); 
+void button_server_reset(GtkWidget *button, gpointer parameters) {
+
+    struct data *temp = (struct data *)parameters;
+    button_server_stop(button, parameters);
+    gtk_label_set_text(GTK_LABEL(temp -> server_status_label), "Server Status"); 
+    gtk_editable_set_text(GTK_EDITABLE(temp -> ip_address), "");
+    gtk_editable_set_text(GTK_EDITABLE(temp -> port_number), "");
 }
-
-/* void button_server_reset(GtkWidget *button) { */
-
-/*    int status = server_reset(); */
-/*    if (status == 0) */
-/*        g_print("server reset failed"); */
-/*    else */
-/*        g_print("server reset"); */
-/* } */
 
 int window(GtkApplication *app) {
 
     GtkWidget *window;
     GtkWidget *grid;
     GtkWidget *information;
+    GtkWidget *ip_address_label;
+    GtkWidget *port_number_label;
     GtkWidget *button_start;
     GtkWidget *button_stop;
     GtkWidget *button_reset;
 
-    GtkEntryBuffer *text;
-    GtkWidget *entry;
+    GtkWidget *ip_address_entry;
+    GtkWidget *port_number_entry;
 
-    entry = gtk_entry_new();
-    text = gtk_entry_buffer_new("", 0);
-    char *msg = (char *)gtk_entry_buffer_get_text(text);
-    gtk_widget_set_visible(GTK_WIDGET(entry), 1);
+    ip_address_entry = gtk_entry_new();
+    port_number_entry = gtk_entry_new();
+
+    gtk_entry_set_placeholder_text(GTK_ENTRY(ip_address_entry), "Ex : 167.12.32.11");
+    gtk_entry_set_placeholder_text(GTK_ENTRY(port_number_entry), "Ex : 13000");
 
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Server" );
     gtk_window_set_default_size(GTK_WINDOW(window),800 ,600);
 
     information = gtk_label_new("Connection Status");
+    ip_address_label = gtk_label_new("IP address : ");
+    port_number_label = gtk_label_new("Port Number : ");
 
     button_start = gtk_button_new_with_label("Start Server");
     button_stop  = gtk_button_new_with_label("Stop Server");
     button_reset = gtk_button_new_with_label("Reset server");
 
-    printf("%s\n", msg);
-    g_signal_connect(button_start, "clicked", G_CALLBACK(button_server_start), information);
-    g_signal_connect(button_stop, "clicked", G_CALLBACK(button_server_stop), information);
-    g_signal_connect(button_reset, "clicked", G_CALLBACK(button_server_reset), information);
+    struct data *parameters = malloc(sizeof(struct data));
+    parameters -> server_status_label = information;
+    parameters -> ip_address = ip_address_entry;
+    parameters -> port_number = port_number_entry;
+
+    g_signal_connect(button_start, "clicked", G_CALLBACK(button_server_start), parameters);
+    g_signal_connect(button_stop, "clicked", G_CALLBACK(button_server_stop), parameters);
+    g_signal_connect(button_reset, "clicked", G_CALLBACK(button_server_reset), parameters);
 
     grid = gtk_grid_new();
-    gtk_grid_set_column_spacing(GTK_GRID(grid), 20);
-    gtk_grid_set_row_spacing(GTK_GRID(grid), 20);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 25);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 25);
     gtk_widget_set_halign(grid, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(grid, GTK_ALIGN_CENTER);
 
-    gtk_grid_attach(GTK_GRID(grid), information, 0, 0, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), button_start, 0, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), button_stop, 0, 2, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), button_reset, 0, 3, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), entry, 0, 4, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), information, 1, 0, 1, 1);
+
+    gtk_grid_attach(GTK_GRID(grid), ip_address_label, 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), port_number_label, 0, 2, 1, 1);
+
+    gtk_grid_attach(GTK_GRID(grid), ip_address_entry, 1, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), port_number_entry, 1, 2, 1, 1);
+
+    gtk_grid_attach(GTK_GRID(grid), button_start, 1, 3, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), button_stop, 1, 4, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), button_reset, 1, 5, 1, 1);
 
 
     gtk_window_set_child(GTK_WINDOW(window), grid);

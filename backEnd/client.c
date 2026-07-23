@@ -50,13 +50,13 @@ void send_msg(int server_fd, char *msg, int length) {
     write(server_fd, msg, length - 1);
 }
 
-void recv_msg(int client_socket) {
+char* recv_msg(int client_socket) {
 
-    char msg[1024];
+    char *msg = malloc(1024);
     int size = 1023;
     memset(msg, 0, size);
     read(client_socket, msg, size);
-    printf("%s\n", msg);
+    return msg;
 }
 
 /* int main() { */
